@@ -1,7 +1,7 @@
 ---
-title: AutoCloseable_Interface
+title: 带有资源的try语句（AutoCloseable）
 date: 2017-03-08 09:45:02
-tags: [Java,AutoClostable]
+tags: [Java,AutoCloseable]
 ---
 
 今天在关闭输入输出流的时候，觉得总是手动去关闭太麻烦，有没有什么简单的方法。于是乎发现了AutoCloseable这个接口。
