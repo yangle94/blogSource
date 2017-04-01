@@ -5,7 +5,7 @@ tags: [Github]
 ---
 因为我们身处天朝外加某堵墙的原因，访问Github实在是不稳定，SSH慢的要死，简直了。现在交给大家利用ShadowScoket进行对Github的加速。
 ## 购买一个VPN
-随便什么VPN都好，我这里用的是TMDVPN，我自己用的也是这个，感觉还不错，也不是很贵，有想要的童鞋请给我发Email：1024920977@qq.com，我买的是50元半年，一个月20G流量，[附带邀请码的注册地址](http://www.tmdvpn.cn/auth/register?code=PlMq479CNDyxOdjmFg)。具体使用ShadowScoket的教程他们官网上都有。
+随便什么VPN都好，我这里用的是TMDVPN，我自己用的也是这个，感觉还不错，也不是很贵，有想要的童鞋请给我发Email：1024920977@qq.com，我买的是50元半年，一个月20G流量，[附带邀请码的注册地址](https://www.tmdvpn.cn/auth/register?code=PlMq479CNDyxOdjmFg)。具体使用ShadowScoket的教程他们官网上都有。
 
 ## 设置Git的代理地址
 
