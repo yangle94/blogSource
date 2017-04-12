@@ -45,16 +45,15 @@ Windows对docker提供的镜像分别为nanoServer和windowsservercore，但其�
 
 部署selenium hub
 ```shell
-docker run -d -p 4444:4444 –name selenium-hub angley/selenium-hub:1.1
+docker run -d -p 4444:4444 –name registry.cn-hangzhou.aliyuncs.com/angle/selenium-hub:2.1
 ```
 部署chrome
 ```shell
-docker run -d -P -p 5900:5900 –link selenium-hub:hub –name chrome angley/node-
-chrome-debug:1.0
+docker run -d -P -p 5900:5900 –link selenium-hub:hub –name chrome registry.cn-hangzhou.aliyuncs.com/angle/node-chrome-debug:2.1
 ```
 部署firefox
 ```shell
-docker run -d -P -p 5901:5900 –link selenium-hub:hub –name firefox angley/node-firefox-debug:1.0
+docker run -d -P -p 5901:5900 –link selenium-hub:hub –name firefox registry.cn-hangzhou.aliyuncs.com/angle/node-firefox-debug:2.1
 ```
 部署IE
 nodeconfig.json
@@ -99,3 +98,7 @@ java -jar selenium-server-standalone.jar -role node -nodeConfig nodeconfig.json
 
 我所用的原始Selenium Grid Docker镜像中有中文乱码问题，需要在docker file中加入字符集解决。
 Selenium Grid中存在监控功能并不完善，若想要获取此类信息数据，需要加入自定义servlet（关于此章我会在另一片文章中介绍）
+
+### 7 下载以及中文适配
+
+由于selenium官方的docker镜像对于中文兼容性不是很好，会出现某些中文乱码的问题，其实是因为其包含的乌班图镜像中缺少了部分字符集的原因，为了修复这个问题，我特意制作了修复了此问题的镜像并上传到了阿里云镜像服务器（代码中已经替换）。
