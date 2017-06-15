@@ -1,14 +1,13 @@
 ---
 title: Mac下hexo建站
 date: 2017-05-26 16:46:38
+comments: true
 tags: [Mac,hexo]
 ---
 
-## Mac下hexo建站
-
 刚开始建站的时候说过写一篇建站教程，由于当时建站以后因为工作上的各种事儿给耽误了，以后就再也没工夫写了，今天特地来补上。
 
----s
+---
 
 ### 准备材料
 
@@ -95,7 +94,7 @@ git账户地址以及分支
       branch: master
 
 网址：
-请把你刚才申请的githubpages的地址放到这里的url,例如我的是https://yangle94.github.io/，就把他放到url后。
+请把你刚才申请的githubpages的地址放到这里的url,例如我的是https://yangle94.github.io， 就把他放到url后。
 
     参数  描述  默认值
     url 网址  
