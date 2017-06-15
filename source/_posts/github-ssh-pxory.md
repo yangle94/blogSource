@@ -8,7 +8,7 @@ tags: [Github]
 随便什么VPN都好，我这里用的是TMDVPN，我自己用的也是这个，感觉还不错，也不是很贵，有想要的童鞋请给我发Email：1024920977@qq.com，我买的是50元半年，一个月20G流量，[附带邀请码的注册地址](https://www.tmdvpn.cn/auth/register?code=PlMq479CNDyxOdjmFg)。具体使用ShadowScoket的教程他们官网上都有。
 
 ## 设置Git的代理地址
-
+<!--more-->
 ### https、https代理
 如各平台的 Shadowsocks 客户端都提供一个本地的 socks5 代理，那么你可以这样设置，让 Git 通过 HTTP 链接 clone 代码时走 socks5 代理,当然，你需要看看你的ShadowScoket的socks5的监听端口是多少（ShadowScoket里头高级设置有显示）。
 ```bash

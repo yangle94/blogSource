@@ -26,6 +26,9 @@ class User implements Serializable {
 
 }
 ```
+
+<!--more-->
+
 ## transient使用小结
 ---
 1. &emsp;&emsp;被transient修饰的变量，如果进行序列化：比如写入到文件中，则此变量就不能再被读取到，会被赋值为null

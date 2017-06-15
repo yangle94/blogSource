@@ -18,7 +18,7 @@ tags: [Mac,hexo]
 5. git(由于Mac自带了，就不需要了)
 
 ---
-
+<!--more-->
 ###  github上创建GitHubPages仓库
 
 git 官方参考地址: https://pages.github.com

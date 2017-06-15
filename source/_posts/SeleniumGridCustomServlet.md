@@ -23,6 +23,8 @@ java -cp xxx.jar:selenium-server-standalone-3.0.1.jar org.openqa.grid.selenium.G
 ```
 若为hub则再加入“-role hub”等其它所需参数。
 
+<!--more-->
+
 ### 注意事项
 
 java -cp是classpath的意思，意思是将某些jar加入到classpath中，两个jar用：隔开，此时注意在linux下不支持通配符，所以必须手动将名字补全。-servlets后跟的是自定义servlet的地址，GridLauncherV3为main函数所在位置，在3.0以后的selenium-server-standalone.jar中为GridLauncherV3，2.0为GridLauncher。

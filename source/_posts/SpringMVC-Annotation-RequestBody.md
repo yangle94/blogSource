@@ -13,6 +13,9 @@ public @interface RequestBody {
 }
 ```
 由源码可见，@RequestBody只有一个required属性，默认值为true，该注解会保留至.class文件中，利用反射可以进行查找。
+
+<!--more-->
+
 ## @RequestBody的作用
 该注解常用来处理Content-Type: 不是application/x-www-form-urlencoded编码的内容，例如application/json, application/xml等；
 

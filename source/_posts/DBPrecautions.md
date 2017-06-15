@@ -14,6 +14,8 @@ tags: [Java,AutoCloseable]
         UPDATE SET delete_flag = 1 FROM tableNmae = ?
     ```
 
+<!--more-->
+
 ### 分析
 此时，虽然看似已经实现了程序所需要的功能，其实隐含着很大的问题。当数据库增加、删除频率以及数据库条数很大的时候，此问题会暴露的十分严重，甚至数据库的崩溃。
 
