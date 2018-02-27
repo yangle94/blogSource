@@ -72,6 +72,8 @@ tags: [java8,concurrent]
 
 ```
 
+<!-- more -->
+
 ### Node 
 
 ```java
