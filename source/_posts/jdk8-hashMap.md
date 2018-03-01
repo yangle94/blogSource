@@ -389,6 +389,4 @@ resize()中，对JDK1.7的resize方法进行了改进，JDK1.7中，resize方法
 
 ### 参考文章
 
-
-[Java 8系列之重新认识HashMap
-](https://tech.meituan.com/java-hashmap.html)
+[Java 8系列之重新认识HashMap](https://tech.meituan.com/java-hashmap.html)

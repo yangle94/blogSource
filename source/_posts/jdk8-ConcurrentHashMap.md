@@ -459,6 +459,33 @@ static final class ForwardingNode<K,V> extends Node<K,V> {
         return null;
     }
     
+```
+
+按照上面的源码，我们可以确定put整个流程如下：
+
+- 判空；ConcurrentHashMap的key、value都不允许为null
+- 计算hash。利用spread()计算hash值。
+
+```java
+
+    static final int spread(int h) {
+        return (h ^ (h >>> 16)) & HASH_BITS;
+    }
+    
+```
+
+- 遍历table，进行节点插入操作，过程如下：
+
+    1. 如果table为空，则表示ConcurrentHashMap未初始化，进行初始化操作：initTable()
+    2. 根据hash值获取节点的位置i，若该位置为空，则直接插入（不需要加锁）。计算f位置：i=(n – 1) & hash
+    3. 如果检测到fh = f.hash == -1，则f是ForwardingNode节点，表示有其他线程正在进行扩容操作，则帮助线程一起进行扩容操作
+    4. 如果f.hash >= 0 表示是链表结构，则遍历链表，如果存在当前key节点则替换value，否则插入到链表尾部。如果f是TreeBin类型节点，则按照红黑树的方法更新或者增加节点
+    5. 若链表长度 > TREEIFY_THRESHOLD(默认是8)，则将链表转换为红黑树结构
+- 调用addCount方法，ConcurrentHashMap的size + 1
+
+### 初始化table数组
+
+```java
     /**
      * Initializes table, using the size recorded in sizeCtl.
      */
@@ -494,6 +521,12 @@ static final class ForwardingNode<K,V> extends Node<K,V> {
         return tab;
     }
     
+```
+
+### helpTransfer协助转移元素
+
+```java
+
     /**
      * Helps transfer if a resize is in progress.
      */
@@ -519,25 +552,187 @@ static final class ForwardingNode<K,V> extends Node<K,V> {
 
 ```
 
-按照上面的源码，我们可以确定put整个流程如下：
-
-- 判空；ConcurrentHashMap的key、value都不允许为null
-- 计算hash。利用spread()计算hash值。
+### transfer() 转移方法
 
 ```java
 
-    static final int spread(int h) {
-        return (h ^ (h >>> 16)) & HASH_BITS;
+    /**
+     * Moves and/or copies the nodes in each bin to new table. See
+     * above for explanation.
+     */
+    private final void transfer(Node<K,V>[] tab, Node<K,V>[] nextTab) {
+        int n = tab.length, stride;
+        //计算每个线程一次性处理的table数组的长度
+        if ((stride = (NCPU > 1) ? (n >>> 3) / NCPU : n) < MIN_TRANSFER_STRIDE)
+            stride = MIN_TRANSFER_STRIDE; // subdivide range
+
+        //判断nextTab是否有值，有值则说明已经有线程完成了nextTable的初始化，当然，这里不能排除多个线程同时进入的并发情况（单就方法内部来说），我查看了transfer的所有调用位置，全部都放在一个cas操作下进行，保证了这个nextTab == null只可能有一个线程进行。
+        if (nextTab == null) {            // initiating
+            try {
+                @SuppressWarnings("unchecked")
+                Node<K,V>[] nt = (Node<K,V>[])new Node<?,?>[n << 1];
+                nextTab = nt;
+            } catch (Throwable ex) {      // try to cope with OOME
+                sizeCtl = Integer.MAX_VALUE;
+                return;
+            }
+            nextTable = nextTab;
+            transferIndex = n;
+        }
+        //扩容后table的长度
+        int nextn = nextTab.length;
+        //创建ForwardingNode
+        ForwardingNode<K,V> fwd = new ForwardingNode<K,V>(nextTab);
+        //是否推进
+        boolean advance = true;
+        //提交nextTable之前确保正确
+        boolean finishing = false; // to ensure sweep before committing nextTab
+
+        //i代表当前线程所迁移桶的索引（从大到小逆序）；bound表示已经分配到当前线程的桶的最小的索引
+        for (int i = 0, bound = 0;;) {
+            Node<K,V> f; int fh;
+
+            //更新待迁移的hash桶索引
+            while (advance) {
+                int nextIndex, nextBound;
+                //--i用来更新桶的索引，
+                if (--i >= bound || finishing)
+                    advance = false;
+                //如果未被分配的table数组长度小于等于0
+                else if ((nextIndex = transferIndex) <= 0) {
+                    i = -1;
+                    advance = false;
+                }
+                //使用cas，更新transferIndex的值（表示待分配任务的table数组长度）
+                else if (U.compareAndSwapInt
+                         (this, TRANSFERINDEX, nextIndex,
+                          nextBound = (nextIndex > stride ?
+                                       nextIndex - stride : 0))) {
+                    //更新成功，将减去后的table数组长度赋值到bound
+                    bound = nextBound;
+                    i = nextIndex - 1;
+                    advance = false;
+                }
+            }
+
+            //选择最后一次分配
+            if (i < 0 || i >= n || i + n >= nextn) {
+                int sc;
+                if (finishing) {
+                    //最后一个迁移的线程，recheck后，做收尾工作，然后退出
+                    nextTable = null;
+                    table = nextTab;
+                    sizeCtl = (n << 1) - (n >>> 1);
+                    return;
+                }
+                if (U.compareAndSwapInt(this, SIZECTL, sc = sizeCtl, sc - 1)) {
+                    /**
+                     第一个扩容的线程，执行transfer方法之前，会设置 sizeCtl = (resizeStamp(n) << RESIZE_STAMP_SHIFT) + 2)
+                     后续帮其扩容的线程，执行transfer方法之前，会设置 sizeCtl = sizeCtl+1
+                     每一个退出transfer的方法的线程，退出之前，会设置 sizeCtl = sizeCtl-1
+                     那么最后一个线程退出时：
+                     必然有sc == (resizeStamp(n) << RESIZE_STAMP_SHIFT) + 2)，即 (sc - 2) == resizeStamp(n) << RESIZE_STAMP_SHIFT
+                    */
+                    
+                    //不相等，说明不到最后一个线程，直接退出transfer方法
+                    if ((sc - 2) != resizeStamp(n) << RESIZE_STAMP_SHIFT)
+                        return;
+                    finishing = advance = true;
+                    //最后退出的线程要重新check下是否全部迁移完毕
+                    i = n; // recheck before commit
+                }
+            }
+            else if ((f = tabAt(tab, i)) == null)
+                advance = casTabAt(tab, i, null, fwd);
+            else if ((fh = f.hash) == MOVED)
+                advance = true; // already processed
+            else {
+                //对桶f进行加锁
+                synchronized (f) {
+                    //判断f是否是当前的桶
+                    if (tabAt(tab, i) == f) {
+                        Node<K,V> ln, hn;
+
+                        //fh >= 0代表链表
+                        if (fh >= 0) {
+                            //通过fh & n先遍历一次node，获得最后一段hash & n相同的链表，这样分离的时候可以直接使用，不需要再次去new。
+                            int runBit = fh & n;
+                            Node<K,V> lastRun = f;
+                            for (Node<K,V> p = f.next; p != null; p = p.next) {
+                                int b = p.hash & n;
+                                if (b != runBit) {
+                                    runBit = b;
+                                    lastRun = p;
+                                }
+                            }
+                            if (runBit == 0) {
+                                ln = lastRun;
+                                hn = null;
+                            }
+                            else {
+                                hn = lastRun;
+                                ln = null;
+                            }
+
+                            //此段将node列表分为两个链表，算法跟hashmap的分离方法一样。
+                            for (Node<K,V> p = f; p != lastRun; p = p.next) {
+                                int ph = p.hash; K pk = p.key; V pv = p.val;
+                                if ((ph & n) == 0)
+                                    ln = new Node<K,V>(ph, pk, pv, ln);
+                                else
+                                    hn = new Node<K,V>(ph, pk, pv, hn);
+                            }
+                            setTabAt(nextTab, i, ln);
+                            setTabAt(nextTab, i + n, hn);
+                            setTabAt(tab, i, fwd);
+                            advance = true;
+                        }
+                        //红黑树迁移
+                        else if (f instanceof TreeBin) {
+                            TreeBin<K,V> t = (TreeBin<K,V>)f;
+                            TreeNode<K,V> lo = null, loTail = null;
+                            TreeNode<K,V> hi = null, hiTail = null;
+                            int lc = 0, hc = 0;
+                            for (Node<K,V> e = t.first; e != null; e = e.next) {
+                                int h = e.hash;
+                                TreeNode<K,V> p = new TreeNode<K,V>
+                                    (h, e.key, e.val, null, null);
+                                if ((h & n) == 0) {
+                                    if ((p.prev = loTail) == null)
+                                        lo = p;
+                                    else
+                                        loTail.next = p;
+                                    loTail = p;
+                                    ++lc;
+                                }
+                                else {
+                                    if ((p.prev = hiTail) == null)
+                                        hi = p;
+                                    else
+                                        hiTail.next = p;
+                                    hiTail = p;
+                                    ++hc;
+                                }
+                            }
+                            ln = (lc <= UNTREEIFY_THRESHOLD) ? untreeify(lo) :
+                                (hc != 0) ? new TreeBin<K,V>(lo) : t;
+                            hn = (hc <= UNTREEIFY_THRESHOLD) ? untreeify(hi) :
+                                (lc != 0) ? new TreeBin<K,V>(hi) : t;
+                            setTabAt(nextTab, i, ln);
+                            setTabAt(nextTab, i + n, hn);
+                            setTabAt(tab, i, fwd);
+                            advance = true;
+                        }
+                    }
+                }
+            }
+        }
     }
-    
+
 ```
 
-- 遍历table，进行节点插入操作，过程如下：
+### 参考文章
 
-	1. 如果table为空，则表示ConcurrentHashMap未初始化，进行初始化操作：initTable()
-	2. 根据hash值获取节点的位置i，若该位置为空，则直接插入（不需要加锁）。计算f位置：i=(n – 1) & hash
-	3. 如果检测到fh = f.hash == -1，则f是ForwardingNode节点，表示有其他线程正在进行扩容操作，则帮助线程一起进行扩容操作
-	4. 如果f.hash >= 0 表示是链表结构，则遍历链表，如果存在当前key节点则替换value，否则插入到链表尾部。如果f是TreeBin类型节点，则按照红黑树的方法更新或者增加节点
-	5. 若链表长度 > TREEIFY_THRESHOLD(默认是8)，则将链表转换为红黑树结构
-- 调用addCount方法，ConcurrentHashMap的size + 1
+[ConcurrentHashMap源码分析（JDK8） 扩容实现机制](https://www.jianshu.com/p/487d00afe6ca)
 
+[深入分析ConcurrentHashMap1.8的扩容实现](https://www.jianshu.com/p/f6730d5784ad)
