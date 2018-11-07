@@ -25,8 +25,8 @@ docker run --name sq --link postgresql -e SONARQUBE_JDBC_URL=jdbc:postgresql://p
 1. 打开 [localhost:9000](http://localhost:9000/)，进行登录，（初始账户为admin,admin），登录成功后会有教程弹出。
 
 2.汉化：
-    ![汉化图片](http://oiivgasq3.bkt.clouddn.com/872419-20170110180805072-1652845285.png)
-    ![汉化图片](http://oiivgasq3.bkt.clouddn.com/872419-20170110181014853-90947023.png)
+    ![汉化图片](http://img.ylapl.cn/872419-20170110180805072-1652845285.png)
+    ![汉化图片](http://img.ylapl.cn/872419-20170110181014853-90947023.png)
     
 
 
