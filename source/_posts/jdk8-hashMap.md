@@ -267,7 +267,7 @@ static int compareComparables(Class<?> kc, Object k, Object x) {
 
 HashMap流程图如下：
 
-![HashMap.put()方法流程图](http://oiivgasq3.bkt.clouddn.com/hashMap%20put%E6%96%B9%E6%B3%95%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E5%9B%BE.png)
+![HashMap.put()方法流程图](http://img.ylapl.cn/hashMap%20put%E6%96%B9%E6%B3%95%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E5%9B%BE.png)
 
 其中，有两个方法需要注意下：
 
@@ -382,7 +382,7 @@ final Node<K,V>[] resize() {
 
 ```
 
-![](http://oiivgasq3.bkt.clouddn.com/jdk1.8%20hashMap%E6%89%A9%E5%AE%B9%E4%BE%8B%E5%9B%BE.png)
+![](http://img.ylapl.cn/jdk1.8%20hashMap%E6%89%A9%E5%AE%B9%E4%BE%8B%E5%9B%BE.png)
 
 resize()中，对JDK1.7的resize方法进行了改进，JDK1.7中，resize方法会导致新生成的链表中的元素在原链表中的顺序变为相反的顺序（因为每次插入都是在头部进行插入，读取在头部开始读取），而在jdk1.8中则不会，会保留原有顺序（先生成链表，再把头放到talbe数组中）。由于上述原因，jdk1.7中可能会导致node的死循环，从而带来cpu使用率为100%的问题。该问题在1.8中并不存在（死循环问题不存在），但是仍然可能会存在丢失数据的问题，所以并不是线程安全的。
 
